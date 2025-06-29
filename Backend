@@ -1,5 +1,0 @@
-Backend (NodeJS + Express + TypeScript + Postgres)
-Features:
-POST /api/shorten — Shorten a URL.
-GET /api/:shortId — Redirect to original URL.
-GET /api/list — List session’s shortened URLs.
