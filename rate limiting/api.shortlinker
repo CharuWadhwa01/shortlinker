@@ -1,0 +1,27 @@
+@app.post("/api/shorten")
+def shorten_url(data: UrlIn, request: Request):
+    client_ip = request.client.host
+    now = datetime.utcnow()
+
+    # Initialize if IP not in store
+    if client_ip not in rate_limit_store:
+        rate_limit_store[client_ip] = []
+
+    # Filter out old timestamps
+    rate_limit_store[client_ip] = [
+        ts for ts in rate_limit_store[client_ip] if now - ts < WINDOW
+    ]
+
+    if len(rate_limit_store[client_ip]) >= RATE_LIMIT:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+
+    # Add current timestamp
+    rate_limit_store[client_ip].append(now)
+
+    # Proceed with URL shortening
+    db = SessionLocal()
+    short_code = generate_short_code()
+    db_url = Url(short_code=short_code, original_url=data.original_url)
+    db.add(db_url)
+    db.commit()
+    return {"short_url": f"http://localhost:8000/s/{short_code}"}
